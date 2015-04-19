@@ -5,8 +5,8 @@ __author__ = 'temigo'
 
 
 class Node:
-    def __init__(self):
-        self.id = None
+    def __init__(self, id=None):
+        self.id = id
         self.neighbors = None
 
 
@@ -18,6 +18,16 @@ class Edge:
     def __init__(self, source, destination):
         self.source = source
         self.destination = destination
+        # Update neighborhood
+        if source.neighbors is None:
+            source.neighbors = [destination]
+        else:
+            source.neighbors.append(destination)
+        if destination.neighbors is None:
+            destination.neighbors = [source]
+        else:
+            destination.neighbors.append(source)
+
         self.weight = None
 
     @property
