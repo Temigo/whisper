@@ -5,7 +5,7 @@ from urllib.request import Request, urlopen
 from urllib.error import URLError
 import html.parser
 
-__author__ = 'mai-hien'
+__author__ = 'temigo'
 
 
 class Page:
