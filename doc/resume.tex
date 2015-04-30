@@ -1,0 +1,145 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+\newtheorem{definition}{Definition}
+
+\author{Temigo Aoiki}
+\title{Rumor source inference}
+\begin{document}
+\maketitle
+This is a reference document for whisper project.
+
+\tableofcontents
+
+\newpage
+\section{Overview}
+Research in epidemiology has been focused on the dynamics of epidemics, infection rates, network structure, etc. However, only very recent work studied the source inference of an epidemics.
+
+In this document, we will will work on graphs that are supposed to be given. (Graph -> Source inference) The modelisation part (Real world -> Graph) won't be studied here.
+
+\section{Epidemic models}
+The spread of information should first be designed. \footnote{Good deal of informations on the different models used in epidemiology can be found here : 
+\url{http://en.wikipedia.org/wiki/Epidemic_model}}
+Here, we only present the SIR model and the SI model, which are the main models studied in the rumor source inference literature.
+
+\subsection{The SIR model}
+The well-known model SIR model (susceptible-infected-recovered) is the most popular. It was invented in 1927 by Kermack and McKendrick.
+Population is partitioned into three compartiments : 
+\begin{itemize}
+\item $S$ the susceptible individuals (not yet infected),
+\item $I$ the infected population,
+\item $R$ the individuals who are no more concerned by the disease (either because they recovered and are immune, or because they died).
+\end{itemize}
+The sum $N = S + I + R$ remains constant (it is the total number of individuals).
+Considering e.g. rates of infection and recovery, we can then define several differential equations on these functions.
+
+\subsection{The SI model}
+A variant of SIR is the SI model (susceptible-infected), where there is no possible recovery.
+
+\section{Rumor centrality}
+Shah and Zaman provided the first systematic study of the problem of finding the source of a rumor in a network. They defined the topological quantity of \textbf{rumor centrality} .
+
+\subsection{General assumptions}
+Let $G(V, E)$ be an undirected graph modelling the network. $V$ is the set of vertices, $E$ is the set of edges.We assume there is only one rumor source $v^{*}$. The model used here is the SI model.
+
+We define the virus graph $G_{N}$ which is the subgraph of G induced by the $N$ infected nodes. The actual source will be denoted $v^{*}$ and the source estimation will be $\hat{v}$.
+
+Each node is equally likely to be the source.
+Thus, the Maximum Likelihood Estimator is the best estimator, that is :
+
+\[ \hat{v} = \arg \max_{v \in G_N} P(G_{N} | v^{*} = v) \]
+The quantity $P(G_{N} | v^{*} = v)$ (the likelihood of a virus graph given a source) will be difficult to compute, but we will find that this can be approached by a combinatorial problem.
+
+\subsection{Regular trees}
+
+We begin with regular trees, that is, trees where every node has the same degree. A virus graph construction can be simply described by a permutation of the $N$ nodes, which isn't unique. However, not all permutations of the nodes can represent a potential virus graph, due to the structure constraint of the virus graph. Those permutations allowing us to reproduce the virus graph are called \textit{permitted permutations}.
+
+$P(G_{N} | v^{*} = v)$ can then be computed exactly : it will be the sum of the probabilities of all permitted permutations. On a regular tree, these probabilities are all equal to $P$\footnote{"This is because of the memoryless property of the virus spreading time between nodes and the constant degree of all nodes." \cite{shah1}}, with
+
+\[ P = \frac{1}{k} \frac{1}{k + (k-2)} ... \frac{1}{k+(N-2)(k-2)}\]
+
+To understand this, consider the source node : it has $k$ free edges. When it joins a neighbour, the total number of free edges become $k+(k-2)$, and so on. This gives us the probability of any $N$ nodes permitted permutation, given any source in $G_N$.
+
+Now, all we have to do is to compute the number of permitted permutations, that is, the number of ways the virus can spread.
+
+\begin{definition}
+$R(v,T )$ is the number of permitted permutations of nodes that result in a tree $T$ and begin with node
+$v \in T$ .
+\end{definition}
+
+As a consequence, the likelihood turns out to be proportional to $R(v,T)$, so we have
+
+\[ \hat{v} = \arg \max_{v \in G_N} P(G_{N} | v^{*} = v) = \arg \max_{v \in G_N} R(v, G_N) \]
+
+Here, $R(v,G_N)$ is called the \textbf{rumor centrality} of node $v$. The node which maximizes it is called the \textbf{rumor center}.
+
+\subsection{Computing rumor centrality}
+This is a combinatorial problem.
+\begin{definition}
+$T^{v}_{v_j}$ is the number of nodes in the subtree
+rooted at node $v_j$ , with node $v$ as the source.
+\end{definition}
+
+The goal is to count the number of permitted permutations of the $N$ nodes, describing a virus diffusion beginning at source $v$ and compatible with the virus graph $G_N$. The $k$ neighbors of $v$ are $v_1$, ..., $v_k$.
+
+We have $N$ slots free to describe the permutation. The first node has to be the source $v$. Then the nodes whose subtree is rooted at $v_1$ will be placed in the slots, and there are $T^{v}_{v_1}$ such nodes. They can be ordered in $R(v_1,T^{v}_{v_1})$ different ways. There remains $N-1-T^{v}_{v_1}$ nodes. We continue with the second neighbor, and so on. Multiplying all these quantities gives :
+
+\[ 
+R(v, G_N) = \binom{N-1}{T^{v}_{v_1}} \binom{N-1-T^{v}_{v_1}}{T^{v}_{v_2}} ... 
+\binom{N-1-\sum_{i=1}^{k-1} T^{v}_{v_i}}{T^{v}_{v_k}}
+\prod_{i=1}^{k} R(v_i, T^{v}_{v_i})
+\]
+
+Playing around with this big expression gives in the end a simple formula for $R(v, G_N)$ :
+\[
+R(v, G_N) = N! \prod_{u \in G_N} \frac{1}{T^{v}_{u}}
+\]
+To do this computation, Shah and Zaman proposed a linear-time algorithm in \cite{shah1}.
+
+\subsection{General trees}
+To this point, we have defined and computed the rumor centrality for regular trees. In this simple case, the rumor centrality is an exact ML virus source estimator.
+
+In general trees, all permitted permutations may not have the same probability. However, the rumor centrality remains a good estimator. 
+
+\subsection{General graphs}
+To apply the precedent properties on trees, we shall consider the spanning tree induced by the virus graph. As this could be difficult to know, a Breadth-First-Search tree is often used instead.
+\\
+
+For more details, see \cite{shah1} (early paper) and \cite{shah2} (more mature paper).
+
+\section{Multiple sources}
+These papers did only considered the case of a single rumor source. What if there was multiple sources ? Is it still manageable ?
+
+For more details, see \cite{luo1} and \cite{chen1}.
+
+\section{Suspects}
+Suppose you have a set of suspects, that is, an a priori knowledge. See \cite{dong1} for this.
+
+\section{Limited observations}
+Previous approachs supposed that the graph and the infected nodes could all be observed. In practice, this tends to be difficult, especially if the graph is a big one, such as with social networks. Thus, it would be interesting to develop new approachs needing only a finite and small number of observers.
+
+Pedro Pinto, from EPFL, tried to address this in \cite{pinto}.
+
+
+See \cite{seo1} and \cite{pinto}. For multiple observations see \cite{dong2}
+
+\section{Related projects}
+Some projects might be mentioned here because they are closely related to epidemiology.
+\begin{itemize}
+\item STEM (Spatiotemporal Epidemiological Modeler ): \url{http://www.eclipse.org/stem/}
+\item Epigrass : \url{http://sourceforge.net/projects/epigrass/}
+\item NetLogo : \url{http://ccl.northwestern.edu/netlogo/}
+\end{itemize}
+
+
+\newpage
+\bibliographystyle{alpha}
+\bibliography{resume}
+
+\end{document}
