@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Algorithms used for rumor source inference in a graph
+# - SZ : Shah and Zaman algorithm based on rumor centrality
 
 __author__ = 'temigo'
 
@@ -11,33 +12,6 @@ def fact(n):
         return 1
     else:
         return fact(n-1) * n
-
-
-class PTVNode(Node):
-    def __init__(self, id=None):
-        super().__init__(id=id)
-        self.is_observer = False
-        self.is_source = False
-        self.observations = []
-
-    def add_observation(self, neighbor, time):
-        self.observations.append((neighbor, time))
-
-
-class PTVEdge(Edge):
-    def __init__(self, source, destination):
-        super().__init__(source, destination)
-        self.random_delay_propagation = None
-
-
-class PTVGraph(Graph):
-    def __init__(self, nodes, edges):
-        super().__init__(nodes, edges)
-        # List observers
-        self.observers = []
-        for node in nodes:
-            if node.is_observer:
-                self.observers.append(node)
 
 
 class SZNode(Node):
@@ -77,8 +51,8 @@ class SZGraph(Graph):
             if node.infected:
                 self.infected_nodes.append(node)
 
-    def build_tree(self, root):
-        # For now we assume the graph is a regular tree
+    @staticmethod
+    def build_tree(root):
         root.depth = 0
         pile = [root]
         visited_nodes = []
@@ -95,17 +69,6 @@ class SZGraph(Graph):
         return "SZGRAPH \n %s \n %s" % (self.nodes, self.edges)
 
 
-class PTV:
-    """
-    Algorithm PTV (for Pinto-Thiran-Vetterli - not an official name !)
-    Reference :
-     - Locating the Source of Diffusion in Large-Scale Networks.
-    Pedro C. Pinto, Patrick Thiran, and Martin Vetterli. 2012 (PHYSICAL REVIEW LETTERS)
-    """
-    def __init__(self, graph):
-        self.graph = graph
-
-
 class SZ:
     """
     Algorithm of Shah and Zaman
@@ -114,14 +77,15 @@ class SZ:
     def __init__(self, graph):
         self.graph = graph
 
-    def compute_rumor_centrality(self, tree):
+    @staticmethod
+    def compute_rumor_centrality(tree):
         """
         Rumor centrality message-passing algorithm
-        :param tree:
+        For now we assume the graph is a regular tree
+        :param tree: list of nodes ordered by depth
         :return:
         """
         N = len(tree)
-        # fixme Compute Breadth-First-Search tree while computing rumor centrality ?
         # Bottom-up
         tree.reverse()
         for node in tree:  # ordered by depth
