@@ -10,7 +10,7 @@ class Node:
         self.neighbors.append(neighbor)
 
 
-class Edge:
+class Edge:  # A voir : si cette classe est nécessaire
     def __init__(self, source, destination, oriented=False):
         self.source = source
         self.destination = destination
