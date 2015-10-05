@@ -11,11 +11,13 @@ class AlgorithmSZ:
     def __init__(self):
         pass
 
-    def run(self, graph):
+    def run(self, graph, v=None):
         """
         Run on a general graph
         :param graph:
+        :param v: root of the spanning tree (v has to be infected !)
         :type graph: nx.Graph
+        :type v: nx.Node
         :return:
         """
         # Spanning tree of infected graph
@@ -25,10 +27,10 @@ class AlgorithmSZ:
                 infected_nodes.append(node)
 
         # BFS on infected_nodes
-        tree = nx.bfs_tree(graph.subgraph(infected_nodes), source=infected_nodes[0])  # FIXME source arbitrary
-        return self.algorithm_tree(tree)
+        tree = nx.bfs_tree(graph.subgraph(infected_nodes), source=v)  # FIXME source arbitrary ? iterate over sources ?
+        return self.algorithm_tree(tree, v)
 
-    def algorithm_tree(self, tree):
+    def algorithm_tree(self, tree, v=None):
         """
         Evaluates rumor source in a tree by computing rumor centrality for each node
         Exact estimation for regular trees, heuristic approach for general trees
@@ -36,7 +38,9 @@ class AlgorithmSZ:
         :type tree: nx.DiGraph
         :return:
         """
-        v = tree.nodes()[0]  # FIXME arbitrary choice ?
+        if v is None:
+            v = tree.nodes()[0]  # FIXME arbitrary choice ?
+
         r = self.compute_permitted_permutations(tree, v)
         # nx.set_node_attributes(tree, 'rumor_centrality', r)
 

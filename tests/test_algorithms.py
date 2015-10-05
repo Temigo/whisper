@@ -19,17 +19,50 @@ class TestSZ(unittest.TestCase):
         """
         g = nx.Graph()
         g.add_nodes_from([1, 2, 3])
-        g.add_edges_from([(1, 2), (1, 3)])
+        g.add_edges_from([(1, 2), (1, 3)])  # FIXME do you need to add also (2, 1) and (3, 1) ?
 
         g[1]['infected'] = True
         g[2]['infected'] = True
         g[3]['infected'] = True
 
         sz = AlgorithmSZ()
-        source_estimation = sz.run(g)
-        # self.assertEqual()
-        print(source_estimation)
+        # Test various v options (root of the spanning tree)
+        source_estimation = sz.run(g, v=1)
         self.assertEqual(source_estimation, 1)
+        source_estimation2 = sz.run(g, v=2)
+        self.assertEqual(source_estimation2, 1)
+        source_estimation3 = sz.run(g, v=3)
+        self.assertEqual(source_estimation3, 1)
+
+        print("Source of rumor is %s" % source_estimation)
+
+    def test_less_elementary(self):
+        """
+              1
+             / \
+            2  3
+           / \
+          4  5
+        :return:
+        """
+        g = nx.Graph()
+        g.add_nodes_from([1, 2, 3, 4, 5])
+        g.add_edges_from([(1, 2), (1, 3), (2, 4), (2, 5)])
+
+        g[1]['infected'] = False
+        g[3]['infected'] = False
+        g[4]['infected'] = True
+        g[5]['infected'] = True
+        g[2]['infected'] = True
+
+        sz = AlgorithmSZ()
+        source_estimation = sz.run(g, v=2)
+        self.assertEqual(source_estimation, 2)
+        source_estimation2 = sz.run(g, v=4)
+        self.assertEqual(source_estimation2, 2)
+        source_estimation3 = sz.run(g, v=5)
+        self.assertEqual(source_estimation3, 2)
+        print("Source of rumor is %s" % source_estimation)
 
 
 class TestPinto(unittest.TestCase):
