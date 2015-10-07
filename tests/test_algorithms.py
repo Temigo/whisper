@@ -64,6 +64,32 @@ class TestSZ(unittest.TestCase):
         self.assertEqual(source_estimation3, 2)
         print("Source of rumor is %s" % source_estimation)
 
+    def test_graph(self):
+        """
+        1          5
+        | \      /  \
+        |  3 -- 4   6
+        | /     \  /
+        2        7
+        :return:
+        """
+        g = nx.Graph()
+        g.add_nodes_from([1, 2, 3, 4, 5, 6, 7])
+        g.add_edges_from([(1, 2), (2, 3), (3, 1), (3, 4), (4,5), (5, 6), (6, 7), (7, 4)])
+
+        g[1]['infected'] = True
+        g[2]['infected'] = True
+        g[3]['infected'] = True
+        g[4]['infected'] = True
+        g[5]['infected'] = False
+        g[6]['infected'] = False
+        g[7]['infected'] = False
+
+        sz = AlgorithmSZ()
+        source_estimation = sz.run(g, v=4)
+        self.assertEqual(source_estimation, 3)
+        print("Source of rumor is %s" % source_estimation)
+
 
 class TestPinto(unittest.TestCase):
     pass
