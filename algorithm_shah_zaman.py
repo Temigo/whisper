@@ -23,11 +23,15 @@ class AlgorithmSZ:
         # Spanning tree of infected graph
         infected_nodes = []
         for node in graph:
-            if graph[node]['infected']:  # FIXME attribute to add
+            if graph.node[node]['infected']:
                 infected_nodes.append(node)
 
         # BFS on infected_nodes
-        tree = nx.bfs_tree(graph.subgraph(infected_nodes), source=v)  # FIXME source arbitrary ? iterate over sources ?
+        # FIXME source arbitrary ? iterate over sources ? because output changes according to chosen v
+        # NB : output even changes when v is fixed
+        tree = nx.bfs_tree(graph.subgraph(infected_nodes), source=v)
+
+        # TODO return a list of equal probability rumor sources
         return self.algorithm_tree(tree, v)
 
     def algorithm_tree(self, tree, v=None):
@@ -47,7 +51,7 @@ class AlgorithmSZ:
         # Find the node with maximum rumor centrality
         max_rumor_centrality = 0
         source_estimation = None
-        for node in tree.nodes():
+        for node in tree:
             if r[node] > max_rumor_centrality:
                 source_estimation = node
                 max_rumor_centrality = r[node]
@@ -82,7 +86,7 @@ class AlgorithmSZ:
 
         # Up-down pass
         tree.reverse()
-        N = origin_tree.number_of_nodes()
+        N = origin_tree.number_of_nodes()  # or len(origin_tree)
         for u in tree:
             if u == v:
                 r[v] = factorial(N)
@@ -91,5 +95,4 @@ class AlgorithmSZ:
             else:
                 r[u] = r[origin_tree.predecessors(u)[0]] * t[u] / (N - t[u])
 
-        # return something ?
         return r

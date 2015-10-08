@@ -2,13 +2,23 @@
 # Tests of algorithms
 
 from algorithm_shah_zaman import AlgorithmSZ
-from algorithm_pinto import AlgorithmPinto
+# from algorithm_pinto import AlgorithmPinto
 from algorithm_netsleuth import AlgorithmNetsleuth
-import unittest
+
+import matplotlib.pyplot as plt
 import networkx as nx
+import unittest
 
 
 class TestSZ(unittest.TestCase):
+
+    # Méthode appelée avant chaque test
+    def setUp(self):
+        pass
+
+    # Méthode appelée après chaque test
+    def tearDown(self):
+        pass
 
     def test_elementary(self):
         """
@@ -21,9 +31,9 @@ class TestSZ(unittest.TestCase):
         g.add_nodes_from([1, 2, 3])
         g.add_edges_from([(1, 2), (1, 3)])  # FIXME do you need to add also (2, 1) and (3, 1) ?
 
-        g[1]['infected'] = True
-        g[2]['infected'] = True
-        g[3]['infected'] = True
+        g.node[1]['infected'] = True
+        g.node[2]['infected'] = True
+        g.node[3]['infected'] = True
 
         sz = AlgorithmSZ()
         # Test various v options (root of the spanning tree)
@@ -49,11 +59,11 @@ class TestSZ(unittest.TestCase):
         g.add_nodes_from([1, 2, 3, 4, 5])
         g.add_edges_from([(1, 2), (1, 3), (2, 4), (2, 5)])
 
-        g[1]['infected'] = False
-        g[3]['infected'] = False
-        g[4]['infected'] = True
-        g[5]['infected'] = True
-        g[2]['infected'] = True
+        g.node[1]['infected'] = False
+        g.node[3]['infected'] = False
+        g.node[4]['infected'] = True
+        g.node[5]['infected'] = True
+        g.node[2]['infected'] = True
 
         sz = AlgorithmSZ()
         source_estimation = sz.run(g, v=2)
@@ -77,18 +87,49 @@ class TestSZ(unittest.TestCase):
         g.add_nodes_from([1, 2, 3, 4, 5, 6, 7])
         g.add_edges_from([(1, 2), (2, 3), (3, 1), (3, 4), (4,5), (5, 6), (6, 7), (7, 4)])
 
-        g[1]['infected'] = True
-        g[2]['infected'] = True
-        g[3]['infected'] = True
-        g[4]['infected'] = True
-        g[5]['infected'] = False
-        g[6]['infected'] = False
-        g[7]['infected'] = False
+        g.node[1]['infected'] = True
+        g.node[2]['infected'] = True
+        g.node[3]['infected'] = True
+        g.node[4]['infected'] = True
+        g.node[5]['infected'] = False
+        g.node[6]['infected'] = False
+        g.node[7]['infected'] = False
 
         sz = AlgorithmSZ()
         source_estimation = sz.run(g, v=4)
         self.assertEqual(source_estimation, 3)
         print("Source of rumor is %s" % source_estimation)
+
+    def test_random_graph(self):
+        g = nx.fast_gnp_random_graph(10, 0.5)
+        nx.set_node_attributes(g, 'infected', {n: False for n in g.nodes()})
+        g.node[1]['infected'] = True
+        g.node[2]['infected'] = True
+        g.node[3]['infected'] = True
+        g.node[4]['infected'] = True
+
+        # FIXME Cannot assert anything because graph is random !
+        sz = AlgorithmSZ()
+        source_estimation = sz.run(g, v=4)
+        print("Source of rumor is %s" % source_estimation)
+
+        # Graph drawing
+        # nx.draw_networkx(g, node_color=['b' if g.node[n]['infected'] else 'r' for n in g])
+        # plt.show()
+
+    def test_wheel_graph(self):
+        g = nx.wheel_graph(10)
+        nx.set_node_attributes(g, 'infected', {n: False for n in g.nodes()})
+        g.node[0]['infected'] = True
+        g.node[1]['infected'] = True
+        g.node[5]['infected'] = True
+
+        sz = AlgorithmSZ()
+        source_estimation = sz.run(g, v=1)
+        print("Source of rumor is %s" % source_estimation)
+
+        nx.draw_networkx(g, node_color=['b' if g.node[n]['infected'] else 'r' for n in g])
+        plt.show()
 
 
 class TestPinto(unittest.TestCase):
