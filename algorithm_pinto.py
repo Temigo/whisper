@@ -2,8 +2,10 @@
 # - Pinto algorithm
 
 import networkx as nx
-from numpy import matrix
+from numpy import matrix, array
 from numpy import linalg
+import math
+
 #####################################################################
 # ATRIBUTES OF THE NODE:
 #
@@ -37,83 +39,69 @@ class Node(object):
         self.bfs = False
         self.children = []
 
+
 # O is a vector with the observer nodes
 # propagation delays are RVs with Gaussian distribution N(mi,sigma2)
-class GraphPinto:
+class AlgorithmPinto:
     def __init__(self):
         pass
 
-    def Algorithm(G,O,mi,sigma2):
-        d = observed_delay(O)
+    def Algorithm(self, G, O, mi, sigma2):
+        d = self.observed_delay(G, O)
+        first_node = O[0]
         # calculates F for the first node: fulfills max
-        MAX = MAIN_FUNCTION(first_node,d,Tbfs,mi)
-        source = first_node # SEE HOW WE CAN DO IT                          
+        MAX = self.main_function(first_node, O, d, nx.bfs_tree(G, source=first_node), mi, sigma2)
+        source = first_node  # SEE HOW WE CAN DO IT
         # calculates the maximum F
         for s in G:
-            T = graph_to_bfs(G,s)
-            F = MAIN_FUNCTION(s,d,T,mi)
+            T = nx.bfs_tree(G, source=s)
+            F = self.main_function(s, d, T, mi)
             if F > MAX:
                 MAX = F
                 source = s
         return source
 
     # MAIN_FUNCTION S to be calculated
-    def MAIN_FUNCTION(s,d,T,mi):
-        mi_s = deterministic_delay(s,O,mi)
-        delta = delay_covariance(O,sigma)
-        return mi.T*(delta.I)*(d-(0.5*mi))
-
-    # constructs the breath-first-search tree for a root s
-    def graph_to_bfs(G,s):
-        s.bfs = True
-        stack = s
-        while stack:
-            vertex = stack.pop(0)
-            voisinage = G.neighbors(vertex)
-            for (i = 0 to len(voisinage)-1):
-                if(!voisinage[i].bfs):
-                    voisinage[i].bfs = True
-                    stack.append(voisinage[i])
-                    vertex.children.append(voisinage[i])
-        # reset the variables bfs
-        for v in G:
-            v.bfs = False
-        return s
+    def main_function(self, s, O, d, T, mi, sigma2):
+        mi_s = self.deterministic_delay(T, s, O, mi)
+        delta = self.delay_covariance(T, O, sigma2)
+        return mi_s.T * delta.I * (d - (0.5 * mi_s))
 
     # calculates array d (observed delay)
-    def observed_delay(O):
-        for i in range(0,len(O)-1):
-            d[i] = O[i+1].time - O[i].time
+    @staticmethod
+    def observed_delay(g, O):
+        d = {}
+        for i in range(0, len(O) - 1):
+            d[i] = g.node[O[i + 1]]['time'] - g.node[O[i]]['time']
         return d
 
     # calculates array mi_s (deterministic delay)
-    def deterministic_delay(s,O,mi):
-        constant = height_node(s,O[0])
-        for(i in range(0, len(O)-1):
-            mi_s[i] = height_node(s,O[i+1])-constant
-        mi_s = mi*mi_s
+    def deterministic_delay(self, T, s, O, mi):
+        constant = self.height_node(T, s, O[0])
+        mi_s = array([0 for i in range(len(O)-1)])
+        for i in range(len(O)-1):
+            mi_s[i] = self.height_node(T, s, O[i + 1]) - constant
+        mi_s = mi * mi_s
         return mi_s
 
     # calculates the height of a node in the tree T (recursive)
-    def height_node(T,node):
-        if(len(T.children) == 0):
+    def height_node(self, T, s, node):
+        l = list(nx.all_simple_paths(T, s, node))
+        if l == []:
             return 0
-        if(node in T.children):
-            return 1
-        H = 0
-        for(i in range(0, len(T.children))):
-            H = H+height_node(T.children[i],node)
-        if(H != 0):
-            return H+1
-        return 0
+        else:
+            return len(l[0]) - 1
 
     # calculates the array delta (delay covariance)
-    def delay_covariance(O,sigma):
-        for(k in range(0, len(O)-1)):
-            for(i in range(0, len(O)-1)):
-                if(i == k):
-                    delta[k][i] = height_node(O[0],O[k+1])
+    # FIXME here
+    def delay_covariance(self, T, O, sigma2):
+        n = len(O)
+        delta = matrix([[0 for i in range(n)] for j in range(n)])
+        for k in range(len(O)-1):
+            for i in range(len(O)-1):
+                if i == k:
+                    delta[k][i] = self.height_node(T, O[0], O[k + 1])
                 else:
-                    delta[k][i] =  math.fabs(height_node(O[0],O[k+1])-height_node(O[0],O[i+1]))
-        delta = delta*(sigma**2)
+                    delta[k][i] = math.fabs(self.height_node(T, O[0], O[k + 1]) - self.height_node(T, O[0], O[i + 1]))
+        delta = delta * (sigma2 ** 2)
         return delta

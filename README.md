@@ -10,3 +10,4 @@ An survey of recent work on "rumor source inference" is available here. Short ve
 
 ## Requirements
 Python 3.4 or higher
+Networkx 1.9.1
