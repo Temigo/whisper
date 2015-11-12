@@ -105,6 +105,8 @@ class Netsleuth:
 
         # Generating the ripple
         while len(infected.nodes()) != len(i_graph_init.nodes()):
+            if len(frontier.nodes())==0:
+                break;
             step += 1
 
             # Calculating the infected nodes at next time step
