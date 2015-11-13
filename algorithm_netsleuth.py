@@ -23,6 +23,9 @@ import networkx as nx
 from scipy import linalg
 import numpy as np
 from scipy.misc import comb
+from sympy import Matrix
+from sympy import N as numeric
+from numpy import zeros
 
 
 class Netsleuth:
@@ -34,9 +37,18 @@ class Netsleuth:
     # prob is the probability for an infected node to transmit it to a neighbor.
 
     def run(graph, i_graph_init, prob):
-        """Executes the Netsleuth algotithm on i_graph_init, the graph of the infected nodes"""
+        """Executes the Netsleuth algotithm on graph, given the infected nodes
+        i_graph_init from graph"""
         # Initiating the seeds
         seeds = []
+
+        # Needed to manage the uninfected nods in the laplacian matrix
+        frontier = nx.Graph()
+        for node in i_graph_init:
+            clear_neighbors = len(graph.neighbors(node)) -\
+                                  len(i_graph_init.neighbors(node))
+            if clear_neighbors > 0:
+                frontier.add_node(node, clear=clear_neighbors)
 
         # The infected nodes for computing the first seed are the true ones
         i_graph = nx.Graph(i_graph_init)
@@ -68,17 +80,35 @@ class Netsleuth:
                 number_of_seeds = len(seeds) - 1
                 decreasing_description_length = False
 
+            frontier.clear()
+            for node in i_graph:
+                clear_neighbors = len(graph.neighbors(node)) -\
+                                      len(i_graph.neighbors(node))
+                if clear_neighbors > 0:
+                    frontier.add_node(node, clear=clear_neighbors)
+
         return seeds[:number_of_seeds]
 
     def etape(i_graph):
         """ Calculates the most probable seed within the infected nodes"""
 
-        i_laplacian_matrix = nx.laplacian_matrix(i_graph)
-        # Diagonalizing the laplacian matrix
-        val, vect = linalg.eigh(i_laplacian_matrix.todense()) # The eigh function gives wrong eigenvects for eigenval 0
+        # Taking the actual submatrix, not the laplacian matrix. The change lies in the total number of connections
+        # (The diagonal terms) for the infected nodes connected to uninfected ones in the initial graph
+        i_laplacian_matrix = nx.laplacian_matrix(i_graph).todense()
+        for i in range(0, len(i_graph.nodes())):
+            if frontier.has_node(i_graph.nodes()[i]):
+                i_laplacian_matrix[i, i] +=\
+                                frontier.node[i_graph.nodes()[i]]['clear']
+        
+        # Getting the node with the highest coordinate for the eigenvector of the smallest eigenvalue:
+        
+        # Through analytical method : exact but far too slow
+        Lm = Matrix(i_laplacian_matrix)
+        i = Netsleuth.Sym2NumArray(Matrix(Lm.eigenvects()[0][2][0])).argmax()
 
-        # Getting the node with the highest coordinate for the eigenvector of the smallest eigenvalue
-        i = abs(vect[0]).argmax()
+        # Through numeric method : quicker but completely wrong for the revelant vector most of the time
+        # val, vect = linalg.eigh(i_laplacian_matrix)
+        # i = vect[0].argmax()
 
         seed = (i_graph.nodes()[i])
 
@@ -185,6 +215,15 @@ class Netsleuth:
             b = np.log2(b)
             s += b
         return s + np.log2(2.865064)
+        
+    def Sym2NumArray(F):
+        """ For convertion from sympy to numpy matrix"""
+        shapeF = F.shape
+        B = zeros(shapeF)
+        for i in range(0, shapeF[0]):
+            for j in range(0, shapeF[1]):
+                B[i, j] = numeric(F[i, j])
+        return B
 
 # for testing
 
@@ -220,6 +259,9 @@ def edging(graph, graph_i):
 G = nx.Graph()
 
 l = 6
+# For now : good result analytically for l=5. taking far too much time afterwards, calculating the eigenvalues
+# Numerically, fast up to l = 25 but often incoherent values : far from the center of the graph. This is
+# due to the aproximations errors in the alculation of the eigenvector only
 
 # for i in range(0, l**2):
 #    G.add_node(i, name=i)
@@ -248,6 +290,16 @@ for i in range(0, l-1):
         else:
             pass  # G.add_edge(i*l+j, (i)*l+j)
 
-plot(G)
-s = Netsleuth.run(G, G, 0.5)
+G_i = nx.Graph()
+for node in G.nodes():
+    if len(G.neighbors(node)) == 4:
+        G_i.add_node(node)
+edging(G, G_i)
+
+plot(G_i)
+
+graph = nx.Graph(G)
+i_graph_init = nx.Graph(G_i)
+
+s = Netsleuth.run(G, G_i, 0.5)
 print(s)
