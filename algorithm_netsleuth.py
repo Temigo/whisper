@@ -20,12 +20,11 @@ class AlgorithmNetsleuth:
 
 # from graph import Node, Edge, Graph
 import networkx as nx
-from scipy import linalg
 import numpy as np
 from scipy.misc import comb
-from sympy import Matrix
 from sympy import N as numeric
 from numpy import zeros
+from scipy.sparse.linalg import eigs as eigs
 
 
 class Netsleuth:
@@ -94,21 +93,23 @@ class Netsleuth:
 
         # Taking the actual submatrix, not the laplacian matrix. The change lies in the total number of connections
         # (The diagonal terms) for the infected nodes connected to uninfected ones in the initial graph
-        i_laplacian_matrix = nx.laplacian_matrix(i_graph).todense()
+        i_laplacian_matrix = nx.laplacian_matrix(i_graph)
         for i in range(0, len(i_graph.nodes())):
             if frontier.has_node(i_graph.nodes()[i]):
                 i_laplacian_matrix[i, i] +=\
                                 frontier.node[i_graph.nodes()[i]]['clear']
-        
+
         # Getting the node with the highest coordinate for the eigenvector of the smallest eigenvalue:
         
-        # Through analytical method : exact but far too slow
-        Lm = Matrix(i_laplacian_matrix)
-        i = Netsleuth.Sym2NumArray(Matrix(Lm.eigenvects()[0][2][0])).argmax()
+        # Lm = Matrix(i_laplacian_matrix.todense())
+        # i = Netsleuth.Sym2NumArray(Matrix(Lm.eigenvects()[0][2][0])).argmax()
 
-        # Through numeric method : quicker but completely wrong for the revelant vector most of the time
-        # val, vect = linalg.eigh(i_laplacian_matrix)
+        # val, vect = linalg.eigh(i_laplacian_matrix.todense())
         # i = vect[0].argmax()
+
+        # Working good and fast !
+        val, vect = eigs(i_laplacian_matrix.rint())
+        i = vect[:, 0].argmax()
 
         seed = (i_graph.nodes()[i])
 
@@ -179,7 +180,7 @@ class Netsleuth:
             if len(frontier_degree_t[j]) > 0:
                 f_j = len(frontier_degree_t[j])
                 p_j = 1-(1-prob)**(j+1)
-                n_j = int(min(np.floor(p_j*(f_j/prob+1)), f_j)) # The f_j/prob implicates n_j > f_j
+                n_j = int(min(np.floor(p_j*(f_j+1)), f_j)) # The f_j/prob implicates n_j > f_j
                 infected_t.append(np.random.choice(frontier_degree_t[j], n_j,
                                   replace=False))
 
