@@ -108,7 +108,7 @@ class AlgorithmNetsleuth:
         # val, vect = linalg.eigh(i_laplacian_matrix.todense())
         # i = vect[0].argmax()
 
-        val, vect = eigs(i_laplacian_matrix.rint())
+        val, vect = eigs(np.rint(i_laplacian_matrix))
         i = vect[:, 0].argmax()
 
         seed = (i_graph.nodes()[i])
