@@ -11,7 +11,7 @@ from numpy import zeros
 from scipy.sparse.linalg import eigs as eigs
 
 
-class Netsleuth:
+class AlgorithmNetsleuth:
     def __init__(self):
         pass
 
@@ -36,11 +36,12 @@ class Netsleuth:
     #
     #####################################################################
 
-    def run(graph, i_graph_init, prob):
+    def run(self, graph, i_graph_init, prob):
         """Executes the Netsleuth algotithm on graph, given the infected nodes
         i_graph_init from graph"""
         # Initiating the seeds
         seeds = []
+        number_of_seeds = 0
         frontier = nx.Graph()
         for node in i_graph_init:
             clear_neighbors = len(graph.neighbors(node)) -\
@@ -58,15 +59,15 @@ class Netsleuth:
         while decreasing_description_length:
 
             # Getting the next better seed
-            seed = Netsleuth.etape(frontier, i_graph)
+            seed = self.etape(frontier, i_graph)
             seeds.append(seed)
 
             # Calculating the MDL for the seed set
-            seed_encoding = (Netsleuth.logn(len(seeds)) +
+            seed_encoding = (self.logn(len(seeds)) +
                              np.log2(comb(len(i_graph_init.nodes()),
                                           len(seeds))))
             # Getting the most truthworthly ripple
-            ripple_encoding = Netsleuth.ripple(i_graph_init, seeds, prob)
+            ripple_encoding = self.ripple(i_graph_init, seeds, prob)
 
             # Removing the seed for the calculation of the next one
             i_graph.remove_node(seed)
@@ -88,6 +89,7 @@ class Netsleuth:
 
         return seeds[:number_of_seeds]
 
+    @staticmethod
     def etape(frontier, i_graph):
         """ Calculates the most probable seed within the infected nodes"""
 
@@ -113,7 +115,7 @@ class Netsleuth:
 
         return seed
 
-    def ripple(i_graph_init, seeds, prob):
+    def ripple(self, i_graph_init, seeds, prob):
         """ Simulating the most truthworthly ripple from the seed set"""
 
         # The uninfected nodes adjacent to the infected ones
@@ -139,14 +141,15 @@ class Netsleuth:
             step += 1
 
             # Calculating the infected nodes at next time step
-            step_encoding = Netsleuth.ripple_step(i_graph_init,
+            step_encoding = self.ripple_step(i_graph_init,
                                                   frontier,
                                                   infected,
                                                   prob)
             ripple_encoding += step_encoding
 
-        return ripple_encoding + Netsleuth.logn(step)
+        return ripple_encoding + self.logn(step)
 
+    @staticmethod
     def ripple_step(i_graph_init, frontier, infected, prob):
         """ Generating a step in the infection simulation"""
 
@@ -204,6 +207,7 @@ class Netsleuth:
 
         return step_encoding
 
+    @staticmethod
     def logn(a):
         if a == 0:
             return 0
@@ -214,6 +218,7 @@ class Netsleuth:
             s += b
         return s + np.log2(2.865064)
 
+    @staticmethod
     def Sym2NumArray(F):
         shapeF = F.shape
         B = zeros(shapeF)
@@ -225,113 +230,3 @@ class Netsleuth:
 # for testing
 
 
-def plot(G):
-    """ A nice plotting function for the graphs"""
-
-    pos = nx.spring_layout(G, iterations=1000)
-    nx.draw_networkx_edges(G, pos)
-    nx.draw_networkx_labels(G, pos)
-    nx.draw_networkx_nodes(G, pos, node_size=500)
-
-
-def i_plot(G, G_i):
-    """ A nice plotting function for the graphs"""
-
-    pos = nx.spring_layout(G, iterations=500)
-    nx.draw_networkx_edges(G, pos)
-    nx.draw_networkx_labels(G, pos)
-    nx.draw_networkx_nodes(G, pos, node_size=500, node_color='g')
-    nx.draw_networkx_nodes(G_i, pos, node_size=500, node_color='r')
-
-
-def edging(graph, graph_i):
-    for node in graph_i:
-        for neighbor in graph.neighbors(node):
-            if graph_i.has_node(neighbor):
-                graph_i.add_edge(node, neighbor)
-
-G = nx.Graph()
-
-l = 27
-
-# for i in range(0, l**2):
-#    G.add_node(i, name=i)
-
-for i in range(0, l-1):
-    for j in range(0, l-1):
-        if abs((l-1)/2-i)+abs((l-1)/2-j) <= (l-1)/2 and abs((l-1)/2-(i+1)) \
-                + abs((l-1)/2-j) <= (l-1)/2:
-            a = i+l*j
-            b = +1+l*j
-            G.add_node(100+i+l*j, name=100+i+l*j)
-            G.add_node(100+i+1+l*j, name=100+i+1+l*j)
-            G.add_edge(100+i+l*j, 100+i+1+l*j)
-        else:
-            pass  # G.add_edge(i+l*j, i+l*j)
-
-for i in range(0, l-1):
-    for j in range(0, l-1):
-        if abs((l-1)/2-i)+abs((l-1)/2-j) <= (l-1)/2 and abs((l-1)/2-i-1) \
-                + abs((l-1)/2-j) <= (l-1)/2:
-            a = i*l+j
-            b = i*l+l+j
-            G.add_node(100+i*l+j, name=100+i*l+j)
-            G.add_node(100+(i+1)*l+j, name=100+(i+1)*l+j)
-            G.add_edge(100+i*l+j, 100+(i+1)*l+j)
-        else:
-            pass  # G.add_edge(i*l+j, (i)*l+j)
-"""
-for i in range(0, l-1):
-    for j in range(0, l-1):
-        if abs((l-1)/2-i)+abs((l-1)/2-j) <= (l-1)/2 and abs((l-1)/2-(i+1)) \
-                + abs((l-1)/2-j) <= (l-1)/2:
-            a = i+l*j
-            b = +1+l*j
-            G.add_node(1000+i+l*j, name=1000+i+l*j)
-            G.add_node(1000+i+1+l*j, name=1000+i+1+l*j)
-            G.add_edge(1000+i+l*j, 1000+i+1+l*j)
-        else:
-            pass  # G.add_edge(i+l*j, i+l*j)
-
-for i in range(0, l-1):
-    for j in range(0, l-1):
-        if abs((l-1)/2-i)+abs((l-1)/2-j) <= (l-1)/2 and abs((l-1)/2-i-1) \
-                + abs((l-1)/2-j) <= (l-1)/2:
-            a = i*l+j
-            b = i*l+l+j
-            G.add_node(1000+i*l+j, name=1000+i*l+j)
-            G.add_node(100+(i+1)*l+j, name=1000+(i+1)*l+j)
-            G.add_edge(1000+i*l+j, 1000+(i+1)*l+j)
-        else:
-            pass  # G.add_edge(i*l+j, (i)*l+j)
-
-G.add_edge(156, 1056)"""
-
-G_i = nx.Graph()
-for node in G.nodes():
-    if len(G.neighbors(node)) >= 4:
-        G_i.add_node(node)
-edging(G, G_i)
-
-i_plot(G, G_i)
-
-graph = nx.Graph(G)
-i_graph_init = nx.Graph(G_i)
-
-s = Netsleuth.run(G, G_i, 0.5)
-print(s)
-
-# plot(G)
-
-
-# infected = nx.Graph()
-# infected.add_node(320)
-# frontier = nx.Graph()
-# for neighbor in G.neighbors(320):
-#    frontier.add_node(neighbor)
-#
-# b = 0.001
-# j = 1
-# n = 1
-# p = 1-(1-b)**j
-# np.floor(p*(n/b+1))/n
