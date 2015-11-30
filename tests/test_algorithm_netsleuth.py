@@ -4,6 +4,7 @@
 from algorithm_netsleuth import AlgorithmNetsleuth
 import networkx as nx
 import unittest
+import matplotlib.pyplot as plt
 
 
 class TestNetsleuth(unittest.TestCase):
@@ -25,6 +26,7 @@ class TestNetsleuth(unittest.TestCase):
         nx.draw_networkx_labels(G, pos)
         nx.draw_networkx_nodes(G, pos, node_size=500, node_color='g')
         nx.draw_networkx_nodes(G_i, pos, node_size=500, node_color='r')
+        plt.show()
 
     @staticmethod
     def edging(graph, graph_i):
@@ -97,16 +99,14 @@ class TestNetsleuth(unittest.TestCase):
                 G_i.add_node(node)
         self.edging(G, G_i)
 
-        self.i_plot(G, G_i)
+        #
 
         graph = nx.Graph(G)
         i_graph_init = nx.Graph(G_i)
         netsleuth = AlgorithmNetsleuth()
         s = netsleuth.run(G, G_i, 0.5)
         print(s)
-
-        # plot(G)
-
+        # self.i_plot(G, G_i)
 
         # infected = nx.Graph()
         # infected.add_node(320)

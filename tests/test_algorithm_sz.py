@@ -4,6 +4,7 @@
 from algorithm_shah_zaman import AlgorithmSZ
 import networkx as nx
 import unittest
+import matplotlib.pyplot as plt
 
 
 class TestSZ(unittest.TestCase):

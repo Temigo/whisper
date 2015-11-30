@@ -9,6 +9,8 @@ from scipy.misc import comb
 from sympy import N as numeric
 from numpy import zeros
 from scipy.sparse.linalg import eigs as eigs
+from scipy import linalg
+from sympy import Matrix
 
 
 class AlgorithmNetsleuth:
@@ -89,8 +91,7 @@ class AlgorithmNetsleuth:
 
         return seeds[:number_of_seeds]
 
-    @staticmethod
-    def etape(frontier, i_graph):
+    def etape(self, frontier, i_graph):
         """ Calculates the most probable seed within the infected nodes"""
 
         # Taking the actual submatrix, not the laplacian matrix. The change
@@ -102,14 +103,18 @@ class AlgorithmNetsleuth:
                 i_laplacian_matrix[i, i] +=\
                                 frontier.node[i_graph.nodes()[i]]['clear']
 
-        # Lm = Matrix(i_laplacian_matrix.todense())
-        # i = Netsleuth.Sym2NumArray(Matrix(Lm.eigenvects()[0][2][0])).argmax()
+        # SymPy
+        Lm = Matrix(i_laplacian_matrix.todense())
+        print Lm
+        i = self.Sym2NumArray(Matrix(Lm.eigenvects()[0][2][0])).argmax()
 
+        # NumPy
         # val, vect = linalg.eigh(i_laplacian_matrix.todense())
-        # i = vect[0].argmax()
+        #i = vect[0].argmax()
 
-        val, vect = eigs(np.rint(i_laplacian_matrix))
-        i = vect[:, 0].argmax()
+        # SciPY
+        # val, vect = eigs(i_laplacian_matrix.rint())
+        # i = vect[:, 0].argmax()
 
         seed = (i_graph.nodes()[i])
 
@@ -226,7 +231,5 @@ class AlgorithmNetsleuth:
             for j in range(0, shapeF[1]):
                 B[i, j] = numeric(F[i, j])
         return B
-
-# for testing
 
 
