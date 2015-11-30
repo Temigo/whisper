@@ -31,26 +31,15 @@ import math
 #####################################################################
 
 
-class Node(object):
-    def __init__(self):
-        self.name = ""
-        self.informed = 0
-        self.observer = 0
-        self.path = 0
-        self.time = 0
-        self.bfs = False
-        self.children = []
-
-
 # O is a vector with the observer nodes
 # propagation delays are RVs with Gaussian distribution N(mi,sigma2)
 class AlgorithmPinto:
     def __init__(self):
         pass
 
-    def Algorithm(self, G, O, mi, sigma2):
+    def run(self, G, O, mi, sigma2):
         """
-
+        Main
         :param G: graph
         :param O: list of observers <<<< ACTIVE observers !
         :param mi: mean
@@ -64,23 +53,19 @@ class AlgorithmPinto:
         d = self.observed_delay(G, O)
 
         # calculates F for the first node: fulfills max
-        MAX = self.main_function(first_node, O, d, nx.bfs_tree(G, source=first_node), mi, sigma2)
+        max = self.main_function(first_node, O, d, nx.bfs_tree(G, source=first_node), mi, sigma2)
 
         source = first_node  # SEE HOW WE CAN DO IT
         # calculates the maximum F
         for s in G:  # FIXME is this G_a ?
             # Compute the spanning tree rooted at s
             T = nx.bfs_tree(G, source=s)
-            print("s", s)
-            #print list(nx.all_simple_paths(T, s, O[0]))
             F = self.main_function(s, O, d, T, mi, sigma2)
 
-            if F > MAX:
-                MAX = F
+            if F > max:
+                max = F
                 source = s
-        print source
         return source
-
 
     # MAIN_FUNCTION S to be calculated
     def main_function(self, s, O, d, T, mi, sigma2):
@@ -97,9 +82,6 @@ class AlgorithmPinto:
         mu_s = self.deterministic_delay(T, s, O, mi)
         delta = self.delay_covariance(T, O, sigma2)
         inverse = numpy.linalg.inv(delta)
-        print(mu_s.T)
-        print(inverse)
-        print(d - (0.5 * mu_s))
         return (mu_s.T * inverse * (d - (0.5 * mu_s)))[0, 0]
 
     # calculates array d (observed delay)
@@ -144,15 +126,13 @@ class AlgorithmPinto:
         :param sigma2: variance
         :return:
         """
+        # TODO stop using all_simple_paths (complexity)
         n = len(O)
         delta = numpy.zeros(shape=(n-1, n-1))
         T = T.to_undirected()
         for k in range(n-1):
             for i in range(n-1):
                 if i == k:
-                    # delta[k][i] = self.height_node(T, O[0], O[k + 1])
-                    print list(nx.all_simple_paths(T, O[0], O[k+1]))
-                    print O[k+1], O[0], T
                     delta[k][i] = len(list(nx.all_simple_paths(T, O[0], O[k+1]))[0]) - 1
                 else:
                     c1 = list(nx.all_simple_paths(T, O[0], O[k+1]))[0]
@@ -160,5 +140,4 @@ class AlgorithmPinto:
                     S = [x for x in c1 if x in c2]
                     delta[k][i] = len(S) - 1
         delta = delta * (sigma2 ** 2)  # FIXME : square or not ?
-        print delta
         return delta
