@@ -187,8 +187,12 @@ class AlgorithmNetsleuth:
                 f_j = len(frontier_degree_t[j])
                 p_j = 1-(1-prob)**(j+1)
                 n_j = int(min(np.floor(p_j*(f_j+1)), f_j))
-                infected_t.append(np.random.choice(frontier_degree_t[j], n_j,
-                                  replace=False))
+                if prob < 1:
+                    # The f_j/prob implicates n_j > f_j
+                    infected_t.append(np.random.choice(frontier_degree_t[j],
+                                                       n_j, replace=False))
+                else:
+                    infected_t.append(frontier_degree_t[j])
 
                 step_encoding -= (np.log2(comb(f_j, n_j) * (p_j ** n_j) *
                                           (1-p_j) ** (f_j - n_j)) +
@@ -196,15 +200,10 @@ class AlgorithmNetsleuth:
                 if f_j != n_j:
                     step_encoding += (f_j - n_j)*np.log2(1-n_j/f_j)
 
-                try:
-                    for node in infected_t[j]:
-                        infected.add_node(node)
-                except IndexError:
-                    pass
-
         # Updating the frontier
         for j in infected_t:
             for node in j:
+                infected.add_node(node)
                 frontier.remove_node(node)
                 for neighbor in i_graph_init.neighbors(node):
                     if not infected.has_node(neighbor):
