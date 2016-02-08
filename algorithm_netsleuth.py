@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+"""
+Created on Tue Jan 26 18:54:57 2016
+
+@author: h
+"""
+
+# -*- coding: utf-8 -*-
 # Algorithms used for rumor source inference in a graph
 # Implementation of the Netsleuth algorithm
 
@@ -105,7 +112,6 @@ class AlgorithmNetsleuth:
 
         # SymPy
         Lm = Matrix(i_laplacian_matrix.todense())
-        print Lm
         i = self.Sym2NumArray(Matrix(Lm.eigenvects()[0][2][0])).argmax()
 
         # NumPy
@@ -230,5 +236,3 @@ class AlgorithmNetsleuth:
             for j in range(0, shapeF[1]):
                 B[i, j] = numeric(F[i, j])
         return B
-
-
