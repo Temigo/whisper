@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+"""
+Created on Tue Jan 26 18:54:59 2016
+
+@author: h
+"""
+
+# -*- coding: utf-8 -*-
 # Algorithms used for rumor source inference in a graph
 # - Shah and Zaman algorithm based on rumor centrality
 
@@ -11,7 +18,7 @@ class AlgorithmSZ:
     def __init__(self):
         pass
 
-    def run(self, graph, v=None):
+    def run(self, graph, i_graph, v=None):
         """
         Run on a general graph
         :param graph:
@@ -21,15 +28,11 @@ class AlgorithmSZ:
         :return:
         """
         # Spanning tree of infected graph
-        infected_nodes = []
-        for node in graph:
-            if graph.node[node]['infected']:
-                infected_nodes.append(node)
 
         # BFS on infected_nodes
         # FIXME source arbitrary ? iterate over sources ? because output changes according to chosen v
         # NB : output even changes when v is fixed
-        tree = nx.bfs_tree(graph.subgraph(infected_nodes), source=v)
+        tree = nx.bfs_tree(i_graph, source=v)
 
         # TODO return a list of equal probability rumor sources
         return self.algorithm_tree(tree, v)
