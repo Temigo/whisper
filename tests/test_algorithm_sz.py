@@ -33,13 +33,8 @@ class TestSZ(unittest.TestCase):
         g.node[3]['infected'] = True
 
         sz = AlgorithmSZ()
-        # Test various v options (root of the spanning tree)
-        source_estimation = sz.run(g, v=1)
+        source_estimation = sz.run(g, g)
         self.assertEqual(source_estimation, 1)
-        source_estimation2 = sz.run(g, v=2)
-        self.assertEqual(source_estimation2, 1)
-        source_estimation3 = sz.run(g, v=3)
-        self.assertEqual(source_estimation3, 1)
 
         print("Source of rumor is %s" % source_estimation)
 
@@ -62,13 +57,13 @@ class TestSZ(unittest.TestCase):
         g.node[5]['infected'] = True
         g.node[2]['infected'] = True
 
+        g_i = nx.Graph()
+        g_i.add_nodes_from([2, 4, 5])
+        g_i.add_edges_from([(2, 4), (2, 5)])
+
         sz = AlgorithmSZ()
-        source_estimation = sz.run(g, v=2)
+        source_estimation = sz.run(g, g_i)
         self.assertEqual(source_estimation, 2)
-        source_estimation2 = sz.run(g, v=4)
-        self.assertEqual(source_estimation2, 2)
-        source_estimation3 = sz.run(g, v=5)
-        self.assertEqual(source_estimation3, 2)
         print("Source of rumor is %s" % source_estimation)
 
     def test_graph(self):
@@ -92,8 +87,12 @@ class TestSZ(unittest.TestCase):
         g.node[6]['infected'] = False
         g.node[7]['infected'] = False
 
+        g_i = nx.Graph()
+        g_i.add_nodes_from([1, 2, 3, 4])
+        g_i.add_edges_from([(1, 2), (2, 3), (3, 1), (3, 4)])
+
         sz = AlgorithmSZ()
-        source_estimation = sz.run(g, v=4)
+        source_estimation = sz.run(g, g_i)
         self.assertEqual(source_estimation, 3)
         print("Source of rumor is %s" % source_estimation)
 
@@ -107,7 +106,7 @@ class TestSZ(unittest.TestCase):
 
         # FIXME Cannot assert anything because graph is random !
         sz = AlgorithmSZ()
-        source_estimation = sz.run(g, v=4)
+        source_estimation = sz.run(g, g)
         print("Source of rumor is %s" % source_estimation)
 
         # Graph drawing
@@ -122,7 +121,7 @@ class TestSZ(unittest.TestCase):
         g.node[5]['infected'] = True
 
         sz = AlgorithmSZ()
-        source_estimation = sz.run(g, v=1)
+        source_estimation = sz.run(g, g)
         print("Source of rumor is %s" % source_estimation)
 
         # nx.draw_networkx(g, node_color=['b' if g.node[n]['infected'] else 'r' for n in g])
@@ -133,11 +132,12 @@ class TestSZ(unittest.TestCase):
         nx.set_node_attributes(g, 'infected', {n: False for n in g.nodes()})
         g.node[0]['infected'] = True
 
+        g_i = nx.Graph()
+        g_i.add_nodes_from([0])
+
         sz = AlgorithmSZ()
-        source_estimation = sz.run(g, v=0)
+        source_estimation = sz.run(g, g_i)
         print("Source of rumor is %s" % source_estimation)
 
         # nx.draw_networkx(g, node_color=['b' if g.node[n]['infected'] else 'r' for n in g])
         # plt.show()
-
-

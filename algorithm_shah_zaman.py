@@ -18,13 +18,11 @@ class AlgorithmSZ:
     def __init__(self):
         pass
 
-    def run(self, graph, i_graph, v=None):
+    def run(self, graph, i_graph):
         """
         Run on a general graph
         :param graph:
-        :param v: root of the spanning tree (v has to be infected !)
         :type graph: nx.Graph
-        :type v: nx.Node
         :return:
         """
         # Spanning tree of infected graph
@@ -32,10 +30,17 @@ class AlgorithmSZ:
         # BFS on infected_nodes
         # FIXME source arbitrary ? iterate over sources ? because output changes according to chosen v
         # NB : output even changes when v is fixed
-        tree = nx.bfs_tree(i_graph, source=v)
+        max_rumor_centrality = 0
+        rumor_source = None
+        for v in i_graph:
+            tree = nx.bfs_tree(i_graph, source=v)
 
-        # TODO return a list of equal probability rumor sources
-        return self.algorithm_tree(tree, v)
+            # TODO return a list of equal probability rumor sources
+            rumor_centrality = self.algorithm_tree(tree, v)
+            if rumor_centrality > max_rumor_centrality:
+                max_rumor_centrality = rumor_centrality
+                rumor_source = v
+        return rumor_source
 
     def algorithm_tree(self, tree, v=None):
         """
@@ -58,7 +63,8 @@ class AlgorithmSZ:
             if r[node] > max_rumor_centrality:
                 source_estimation = node
                 max_rumor_centrality = r[node]
-        return source_estimation
+        #return source_estimation
+        return r[v]
 
     @staticmethod
     def compute_permitted_permutations(origin_tree, v):

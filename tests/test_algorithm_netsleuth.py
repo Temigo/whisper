@@ -38,7 +38,7 @@ class TestNetsleuth(unittest.TestCase):
     def test_disc(self):
         G = nx.Graph()
 
-        l = 27
+        l = 7
 
         # for i in range(0, l**2):
         #    G.add_node(i, name=i)
