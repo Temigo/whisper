@@ -7,5 +7,6 @@ from tests.test_algorithm_pinto import TestPinto
 from tests.test_algorithm_netsleuth import TestNetsleuth
 from tests.test_algorithm_fc import TestFC
 from tests.test_remi import TestRemi
+from test_remi_original import TestRemiOriginal
 
 unittest.main()
