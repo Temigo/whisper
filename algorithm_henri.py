@@ -3,6 +3,9 @@
 Created on Mon Dec  7 14:27:14 2015
 
 @author: h
+
+le paramètre j permet de gagner en constance et précision dans l'exécution du code au détriment d'un peu de vitesse
+A tester si c'est vraiment efficace
 """
 
 import networkx as nx
@@ -13,7 +16,119 @@ class Custom:
     def __init__(self):
         pass
 
-    def run(G, G_i, prob):
+    def run(G, G_i, prob, j=1):
+        ss = []
+        Offset = 3
+        for i in range(0, j):
+            for seed in Custom.run_once(G, G_i, prob):
+                ss.append(seed)
+        if j > 1:
+            i = 0
+            nb = []
+            classes = []
+            sources = []
+            indexToScan = []
+            G_seeds = nx.Graph()
+            todo = nx.Graph()
+            for seed in ss:
+                G_seeds.add_node(seed, {'class': -1})
+            for seed in G_seeds.nodes():
+                for neighbor in G_i.neighbors(seed):
+                    if G_seeds.has_node(neighbor):
+                        G_seeds.add_edge(seed, neighbor)
+    
+            for seed in G_seeds.nodes():
+                if G_seeds.node[seed]['class'] != -1:
+                    continue
+                else:
+                    G_seeds.node[seed]['class'] = i
+                    classes.append(i)
+                    indexToScan.append(i)
+                    nb.append(1)
+                    for neighbor in G_seeds.neighbors(seed):
+                        todo.add_node(neighbor)
+                    while(len(todo.nodes()) > 0):
+                        for node in todo.nodes():
+                            todo.remove_node(node)
+                            if G_seeds.node[node]['class'] == -1:
+                                G_seeds.node[node]['class'] = i
+                                nb[i] += 1
+                                for neighbor in G_seeds.neighbors(seed):
+                                    if G_seeds.node[neighbor]['class'] == -1:
+                                        todo.add_node(neighbor)
+                    i += 1
+    
+            for index in indexToScan:
+                val = -1
+                s = ss[0]
+                for seed in G_seeds.nodes():
+                    if classes[G_seeds.node[seed]['class']] == index:
+                        todo = nx.Graph()
+                        done = nx.Graph()
+                        todo.add_node(seed)
+                        done.add_node(seed)
+                        found = 0
+                        offset = Offset
+                        dist = 0
+                        total = 0
+                        while found < nb[classes[G_seeds.node[seed]['class']]] \
+                                + offset:
+                            otherN = nx.Graph()
+                            sourcesN = nx.Graph()
+                            front = nx.Graph()
+                            foundAnOtherSource = False
+                            for node in todo.nodes():
+                                if(G_seeds.has_node(node)):
+                                    foundAnOtherSource = True
+                                    total += dist
+                                    found += 1
+                                    offset = Offset
+                                    if classes[G_seeds.node[seed]['class']] != \
+                                            classes[G_seeds.node[node]['class']]:
+                                        nb[classes[G_seeds.node[seed]['class']]] += \
+                                                nb[classes[G_seeds.node[node]['class']]]
+                                        nb[classes[G_seeds.node[node]['class']]] = 0
+                                        classes[G_seeds.node[node]['class']] = \
+                                                classes[G_seeds.node[seed]['class']]
+                                        if index == len(indexToScan)-1 or \
+        index < len(indexToScan)-1 and indexToScan[len(indexToScan)-1] != index:
+                                            indexToScan.append(index)
+                                    
+                                    for neighbor in G_i.neighbors(node):
+                                        if not done.has_node(neighbor):
+                                            sourcesN.add_node(neighbor)
+                                            
+                                else:
+                                    front.add_node(node)
+                                    for neighbor in G_i.neighbors(node):
+                                        if not done.has_node(neighbor):
+                                            otherN.add_node(neighbor)
+                            if foundAnOtherSource:
+                                done.add_nodes_from(sourcesN.nodes())
+                                todo = sourcesN
+                                todo.add_nodes_from(front.nodes())
+                            else:
+                                done.add_nodes_from(otherN.nodes())
+                                todo = otherN
+                            dist += 1
+                            if found >= nb[classes[G_seeds.node[seed]['class']]]:
+                                offset -= 1
+                        if val == -1 or total/ss.count(seed) < val:
+                            val = total/ss.count(seed)
+                            s = seed
+                for z in range(0, index-len(sources)+1):
+                    sources.append(s)
+                sources[index] = s
+    
+            sol = nx.Graph()
+            for index in classes:
+                sol.add_node(sources[index])
+            return sol.nodes()   
+        else:     
+            return ss
+
+    def run_once(G, G_i, prob):
+        Offset = 3
         frontier = nx.Graph()
         infected = nx.Graph()
         uninfected = nx.Graph(G_i)
@@ -31,28 +146,16 @@ class Custom:
                         frontier.add_node(neighbor, {'i_deg': 1})
                     else:
                         frontier.node[neighbor]['i_deg'] += 1
-        seeds = []
+
         ss = []
         old = []
         while len(infected.node) < len(G_i.node):
             old = ss
             ss = Custom.ripple_step(G_i, frontier, infected, uninfected, prob)
 
-#            for seed in ss:
-#                G_seeds.add_node(seed, {'part':-1})
-#            for seed in  ss:
-#                for neighbors in G_i.neighbors(seed):
-#                    if G_seeds.has_node(neighbor):
-#                        G_seeds.add_edge(seed, neighbor)
-#
-#
-#            for seed in ss:
-#                seeds.append(seed)
-            seeds = ss
-        
         for seed in old:
             ss.append(seed)
-        # Parcours en profondeur pour détecter les classes d'équivalences
+
         i = 0
         nb = []
         classes = []
@@ -62,14 +165,13 @@ class Custom:
         todo = nx.Graph()
         for seed in ss:
             G_seeds.add_node(seed, {'class': -1})
-            # edging
+
         for seed in G_seeds.nodes():
             for neighbor in G_i.neighbors(seed):
                 if G_seeds.has_node(neighbor):
                     G_seeds.add_edge(seed, neighbor)
-        # Les classes de connexité :
+
         for seed in G_seeds.nodes():
-#            print("Init : seed "+str(seed)+" cat : "+str(G_seeds.node[seed]['class']))
             if G_seeds.node[seed]['class'] != -1:
                 continue
             else:
@@ -89,45 +191,32 @@ class Custom:
                                 if G_seeds.node[neighbor]['class'] == -1:
                                     todo.add_node(neighbor)
                 i += 1
-#            print("     cat finale : "+str(G_seeds.node[seed]['class']))
-        # Le parcours en profondeur pour sélectionner la source centrale
-        # dans chaque classe de connexité
 
-#        print(indexToScan)
-#        print(nb)
-#        print(G_seeds.nodes(data = True))
         for index in indexToScan:
-#            print("en cours : "+str(index))
             val = -1
             s = ss[0]
             for seed in G_seeds.nodes():
-#                print("     source : "+str(seed))
-#                print("     cat : "+str(classes[G_seeds.node[seed]['class']]))
-#                print("     nbr : "+str(nb[classes[G_seeds.node[seed]['class']]]))
                 if classes[G_seeds.node[seed]['class']] == index:
                     todo = nx.Graph()
                     done = nx.Graph()
                     todo.add_node(seed)
                     done.add_node(seed)
                     found = 0
-                    offset = 2
+                    offset = Offset
                     dist = 0
                     total = 0
-#                    print("          Famille : "+str(classes[G_seeds.node[seed]['class']]))
-#                    print("     nb : "+str(nb[classes[G_seeds.node[seed]['class']]]))
                     while found < nb[classes[G_seeds.node[seed]['class']]] \
                             + offset:
-                        nextN = nx.Graph()
+                        otherN = nx.Graph()
+                        sourcesN = nx.Graph()
+                        front = nx.Graph()
+                        foundAnOtherSource = False
                         for node in todo.nodes():
                             if(G_seeds.has_node(node)):
+                                foundAnOtherSource = True
                                 total += dist
                                 found += 1
-#                                print("Trouvés : "+str(found))
-#                                print("Cible : "+str(nb[classes[G_seeds.node[seed]['class']]] \
-#                            + offset))
-                                offset = 2
-#                                print("               offset init : "+str(node)+" de classe : "+str(classes[G_seeds.node[node]['class']] \
-#                                ) +" trouvés :"+str(found)+"/"+str(nb[classes[G_seeds.node[seed]['class']]]+ offset))
+                                offset = Offset
                                 if classes[G_seeds.node[seed]['class']] != \
                                         classes[G_seeds.node[node]['class']]:
                                     nb[classes[G_seeds.node[seed]['class']]] += \
@@ -139,23 +228,28 @@ class Custom:
     index < len(indexToScan)-1 and indexToScan[len(indexToScan)-1] != index:
                                         indexToScan.append(index)
                                 
-                            for neighbor in G_i.neighbors(node):
-#                                print("          voisins : "+str(neighbor))
-                                if not done.has_node(neighbor):
-#                                    print(str(neighbor)+" déjà")
-                                    nextN.add_node(neighbor)
-                                    done.add_node(neighbor)
-#                        print(done.nodes())
-#                        print("next : "+str(nextN.nodes()))
+                                for neighbor in G_i.neighbors(node):
+                                    if not done.has_node(neighbor):
+                                        sourcesN.add_node(neighbor)
+                                        
+                            else:
+                                front.add_node(node)
+                                for neighbor in G_i.neighbors(node):
+                                    if not done.has_node(neighbor):
+                                        otherN.add_node(neighbor)
+                        if foundAnOtherSource:
+                            done.add_nodes_from(sourcesN.nodes())
+                            todo = sourcesN
+                            todo.add_nodes_from(front.nodes())
+                        else:
+                            done.add_nodes_from(otherN.nodes())
+                            todo = otherN
                         dist += 1
-                        todo = nextN
                         if found >= nb[classes[G_seeds.node[seed]['class']]]:
                             offset -= 1
-#                            print("                offset : "+str(offset))
                     if val == -1 or total < val:
                         val = total
                         s = seed
-#            print("tentative de définir la source pou l'index : "+str(index))
             for z in range(0, index-len(sources)+1):
                 sources.append(s)
             sources[index] = s
