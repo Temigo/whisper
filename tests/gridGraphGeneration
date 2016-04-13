@@ -1,0 +1,55 @@
+# -*- coding: utf-8 -*-
+"""
+Generates an uninfected grid graph and the corresponding layout for a quick display through nx.
+An example of such a graph for width = 5, which corresponds to all the nodes at distance at most 2 from the center
+  O--O--I--O--O
+  |  |  |  |  |
+  O--I--I--I--O
+  |  |  |  |  |
+  I--I--I--I--I
+  |  |  |  |  |
+  O--I--I--I--O
+  |  |  |  |  |
+  O--O--I--O--O
+
+"""
+
+import networkx as nx
+from Infection import *
+
+def i_plot(G, G_i, pos):
+  """The plotting function : infected nodes, red, and uninfected ones, green"""
+
+  nx.draw_networkx_edges(G, pos)
+  nx.draw_networkx_labels(G, pos)
+  nx.draw_networkx_nodes(G, pos, node_size=500, node_color='g')
+  nx.draw_networkx_nodes(G_i, pos, node_size=500, node_color='r')
+
+def generateGridGraph(width):
+  G = nx.Graph()
+  pos2 = dict([])
+  
+  # adding the horizontal edges
+  for i in range(0, width-1):
+    for j in range(0, width-1):
+      if abs((width-1)/2-i)+abs((width-1)/2-j) <= (width-1)/2 and abs((width-1)/2-(i+1)) + abs((width-1)/2-j) <= (width-1)/2: // 
+        G.add_node(100+i+width*j, name=100+i+width*j)
+        pos2[100+i+width*j] = [i, j]
+        G.add_node(100+i+1+width*j, name=100+i+1+width*j)
+        pos2[100+i+1+width*j] = [(i+1), j]
+        G.add_edge(100+i+width*j, 100+i+1+width*j)
+      else:
+        pass
+  
+  # adding the vertical ones
+  for i in range(0, width-1):
+    for j in range(0, width-1):
+      if abs((width-1)/2-i)+abs((width-1)/2-j) <= (width-1)/2 and abs((width-1)/2-i-1) + abs((width-1)/2-j) <= (width-1)/2:
+        G.add_node(100+i*width+j, name=100+i*width+j)
+        pos2[100+i*width+j] = [j, i]
+        G.add_node(100+(i+1)*width+j, name=100+(i+1)*width+j)
+        pos2[100+(i+1)*width+j] = [j, (i+1)]
+        G.add_edge(100+i*width+j, 100+(i+1)*width+j)
+      else:
+        pass
+	return (G, pos)
